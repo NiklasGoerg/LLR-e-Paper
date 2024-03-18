@@ -14,10 +14,12 @@ from PIL import Image,ImageDraw,ImageFont
 import traceback
 
 import keyboard
-
+import RPi.GPIO as GPIO
 
 logging.basicConfig(level=logging.DEBUG)
 
+# consts
+button1_pin = 26
 
 # vars
 button1IsPressed = False
@@ -25,12 +27,12 @@ button2IsPressed = False
 button3IsPressed = False
 button4IsPressed = False
 
-button1Text = 'Hilfe'
-button2Text = 'Dringende Hilfe'
-button3Text = 'Andere Frage'
-button4Text = 'Ich bin fertig'
+button1Text = 'Frage'
+button2Text = 'Hilfe'
+button3Text = 'Zu schnell'
+button4Text = 'Zu langsam'
 
-assignmentText = 'Lies das Kapitel über das Leben im alten Ägypten in deinem Geschichtsbuch. Beantworte dann die folgenden Fragen: Welche Rolle spielte der Nil im Leben der alten Ägypter? Wie sah die Gesellschaftsstruktur im alten Ägypten aus? Nenne zwei bedeutende Errungenschaften der alten Ägypter. Warum waren die Pyramiden wichtig für die alten Ägypter?'
+assignmentText = 'Thema: Das Leben im alten Ägypten'
 
 # functions
 def breakString(text):
@@ -68,32 +70,34 @@ def writeButtonText(button, text):
     global button4Text
     if (button == 'button1'):
         button1Text = text
-        draw.rectangle((10, 400, 195, 480), outline = 0, fill = 0)
-        draw.text((20, 420), text, font = font24, fill = 255)
+        draw.rectangle((10, 400, 195, 480), outline = 0, fill = 255)
+        draw.text((20, 420), text, font = font24, fill = 0)
     elif (button == 'button2'):
         button2Text = text
-        draw.rectangle((205, 400, 395, 480), outline=0, fill=0)
-        draw.text((215, 420), text, font=font24, fill=255)
+        draw.rectangle((205, 400, 395, 480), outline=0, fill= 255)
+        draw.text((215, 420), text, font=font24, fill=0)
     elif (button == 'button3'):
         button3Text = text
-        draw.rectangle((405, 400, 595, 480), outline=0, fill=0)
-        draw.text((415, 420), text, font=font24, fill=255)
+        draw.rectangle((405, 400, 595, 480), outline=0, fill= 255)
+        draw.text((415, 420), text, font=font24, fill=0)
     elif (button == 'button4'):
         button4Text = text
-        draw.rectangle((605, 400, 790, 480), outline=0, fill=0)
-        draw.text((615, 420), text, font=font24, fill=255)
+        draw.rectangle((605, 400, 790, 480), outline=0, fill= 255)
+        draw.text((615, 420), text, font=font24, fill= 0)
 
-def button1Pressed():
+def button1Pressed(*test):
     global button1IsPressed
     global button1Text
-    print('1 was pressed')
+    print('1 was pressed', test)
+        
+    epd.display_Partial(epd.getbuffer(Himage),0, 0, epd.width, epd.height)
     
     if (button1IsPressed):
-        draw.rectangle((10, 400, 195, 480), outline = 0, fill = 255)
-        draw.text((20, 420), button1Text, font = font24, fill = 0)
+        writeButtonText('button1', button1Text)
         button1IsPressed = False
     else:
-        writeButtonText('button1', button1Text)
+        draw.rectangle((10, 400, 195, 480), outline = 0, fill = 0)
+        draw.text((20, 420), button1Text, font = font24, fill = 255)
         button1IsPressed = True
         
 def button2Pressed():
@@ -103,11 +107,11 @@ def button2Pressed():
     print('2 was pressed')
     
     if button2IsPressed:
-        draw.rectangle((205, 400, 395, 480), outline=0, fill=255)
-        draw.text((215, 420), 'Dringende Hilfe', font=font24, fill=0)
+        writeButtonText('button2', button2Text)
         button2IsPressed = False
     else:
-        writeButtonText('button2', button2Text)
+        draw.rectangle((205, 400, 395, 480), outline=0, fill=0)
+        draw.text((215, 420), button2Text, font=font24, fill=255)
         button2IsPressed = True
 
 def button3Pressed():
@@ -116,11 +120,11 @@ def button3Pressed():
     print('3 was pressed')
     
     if button3IsPressed:
-        draw.rectangle((405, 400, 595, 480), outline=0, fill=255)
-        draw.text((415, 420), 'Andere Frage', font=font24, fill=0)
+        writeButtonText('button3', button3Text)
         button3IsPressed = False
     else:
-        writeButtonText('button3', button3Text)
+        draw.rectangle((405, 400, 595, 480), outline=0, fill=0)
+        draw.text((415, 420), button3Text, font=font24, fill=255)
         button3IsPressed = True
 
 def button4Pressed():
@@ -129,12 +133,19 @@ def button4Pressed():
     print('4 was pressed')
     
     if button4IsPressed:
-        draw.rectangle((605, 400, 790, 480), outline=0, fill=255)
-        draw.text((615, 420), 'Ich bin fertig', font=font24, fill=0)
+        writeButtonText('button4', button4Text)
         button4IsPressed = False
     else:
-        writeButtonText('button4', button4Text)
+        draw.rectangle((605, 400, 790, 480), outline=0, fill=0)
+        draw.text((615, 420), button4Text, font=font24, fill=255)
         button4IsPressed = True
+        
+def newAssignment():
+    writeButtonText('button1', 'Hilfe')
+    writeButtonText('button2', 'Dringende Hilfe')
+    writeButtonText('button3', 'Andere Frage')
+    writeButtonText('button4', 'Ich bin fertig')
+    writeText('Lies das Kapitel über das Leben im alten Ägypten in deinem Geschichtsbuch. Beantworte dann die folgenden Fragen: Welche Rolle spielte der Nil im Leben der alten Ägypter? Wie sah die Gesellschaftsstruktur im alten Ägypten aus? Nenne zwei bedeutende Errungenschaften der alten Ägypter. Warum waren die Pyramiden wichtig für die alten Ägypter?')
 
         
 try:
@@ -174,6 +185,11 @@ try:
     draw.text((615, 420), button4Text, font = font24, fill = 0)
     
     
+    GPIO.setup(button1_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+    # Event-Handler für den Button
+    GPIO.add_event_detect(button1_pin, GPIO.FALLING, callback=button1Pressed, bouncetime=1000)
+    
     while (True):
         epd.display_Partial(epd.getbuffer(Himage),0, 0, epd.width, epd.height)
         try:
@@ -187,6 +203,8 @@ try:
                 button3Pressed()
             elif key_pressed == '4':
                 button4Pressed()
+            elif key_pressed == 'n':
+                newAssignment()
             elif key_pressed == 'x':
                 break
         except KeyboardInterrupt:
@@ -206,4 +224,5 @@ except KeyboardInterrupt:
     logging.info("ctrl + c:")
     epd7in5_V2.epdconfig.module_exit(cleanup=True)
     exit()
+
 

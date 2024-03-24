@@ -43,7 +43,8 @@ class WebSocketClient:
             while True:
                 message = await self.websocket.recv()
                 print("Nachricht vom Server:", message)
-                # Hier können Sie je nach Nachricht Aktionen ausführen
+                handleMessage(message)
+                
         except websockets.exceptions.ConnectionClosed:
             print("Verbindung zum Server wurde geschlossen.")
 
@@ -59,9 +60,10 @@ async def shutdown(client):
 
 
 # Beispielverwendung
+uri = "ws://192.168.1.100:3000"
+client = WebSocketClient(uri)
+
 async def main():
-    uri = "ws://192.168.1.100:3000"  # Ersetzen Sie dies durch die tatsächliche URI des WebSocket-Servers
-    client = WebSocketClient(uri)
     await client.connect()
 
 # We only have SPI bus 0 available to us on the Pi
@@ -108,6 +110,18 @@ button4Text = 'Zu langsam'
 assignmentText = 'Thema: Das Leben im alten Ägypten'
 
 # functions
+def handleMessage(message):
+    index = message.find(':')
+    typeOfMessage = ""
+    contentOfMessage = ""
+    if index != -1:
+        typeOfMessage = message[:index]
+        contentOfMessage = message[index + 1:]
+    if typeOfMessage == "task":
+        writeText(contentOfMessage)
+    else:
+        writeButtonText(typeOfMessage, contentOfMessage)
+
 def endProgramm():
     logging.info("Clear...")
     clearLEDMatrix()
@@ -209,21 +223,27 @@ def button1Pressed(*channel):
     global button1IsPressed
     global button1Text
     global button1Color
+    global client
     print('1 was pressed', channel, button1IsPressed)
     if GPIO.input(button1_pin):  # Überprüfen, ob der Taster losgelassen wurde
         return
         
     epd.display_Partial(epd.getbuffer(Himage),0, 0, epd.width, epd.height)
+    
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
         
     if (button1IsPressed):
         writeButtonText('button1', button1Text)
         clearLEDMatrix()
+        loop.run_until_complete(client.send_message(button1Text + ":cancel"))
         button1IsPressed = False
     else:
         draw.rectangle((10, 400, 195, 480), outline = 0, fill = 0)
         draw.text((20, 420), button1Text, font = font24, fill = 255)
         if isInAnonymMode == False:
             setLEDMatrixColor('button1')
+        loop.run_until_complete(client.send_message(button1Text + ":submit"))
         button1IsPressed = True
         
     epd.display_Partial(epd.getbuffer(Himage),0, 0, epd.width, epd.height)
@@ -232,21 +252,27 @@ def button2Pressed(*channel):
     global button2IsPressed
     global button2Text
     global button2Color
+    global client
     print('2 was pressed')
     if GPIO.input(button2_pin):  # Überprüfen, ob der Taster losgelassen wurde
         return
         
     epd.display_Partial(epd.getbuffer(Himage),0, 0, epd.width, epd.height)
     
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
     if button2IsPressed:
         writeButtonText('button2', button2Text)
         clearLEDMatrix()
+        loop.run_until_complete(client.send_message(button2Text + ":cancel"))
         button2IsPressed = False
     else:
         draw.rectangle((205, 400, 395, 480), outline=0, fill=0)
         draw.text((215, 420), button2Text, font=font24, fill=255)
         if isInAnonymMode == False:
             setLEDMatrixColor('button2')
+        loop.run_until_complete(client.send_message(button2Text + ":submit"))
         button2IsPressed = True
         
     epd.display_Partial(epd.getbuffer(Himage),0, 0, epd.width, epd.height)
@@ -255,21 +281,27 @@ def button3Pressed(*channel):
     global button3IsPressed
     global button3Text
     global button3Color
+    global client
     print('3 was pressed')
     if GPIO.input(button3_pin):  # Überprüfen, ob der Taster losgelassen wurde
         return
         
     epd.display_Partial(epd.getbuffer(Himage),0, 0, epd.width, epd.height)
     
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
     if button3IsPressed:
         writeButtonText('button3', button3Text)
         clearLEDMatrix()
+        loop.run_until_complete(client.send_message(button3Text + ":cancel"))
         button3IsPressed = False
     else:
         draw.rectangle((405, 400, 595, 480), outline=0, fill=0)
         draw.text((415, 420), button3Text, font=font24, fill=255)
         if isInAnonymMode == False:
             setLEDMatrixColor('button3')
+        loop.run_until_complete(client.send_message(button3Text + ":submit"))
         button3IsPressed = True
         
     epd.display_Partial(epd.getbuffer(Himage),0, 0, epd.width, epd.height)
@@ -278,21 +310,27 @@ def button4Pressed(*channel):
     global button4IsPressed
     global button4Text
     global button4Color
+    global client
     print('4 was pressed')
     if GPIO.input(button4_pin):  # Überprüfen, ob der Taster losgelassen wurde
         return
         
     epd.display_Partial(epd.getbuffer(Himage),0, 0, epd.width, epd.height)
     
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
     if button4IsPressed:
         writeButtonText('button4', button4Text)
         clearLEDMatrix()
+        loop.run_until_complete(client.send_message(button4Text + ":cancel"))
         button4IsPressed = False
     else:
         draw.rectangle((605, 400, 790, 480), outline=0, fill=0)
         draw.text((615, 420), button4Text, font=font24, fill=255)
         if isInAnonymMode == False:
             setLEDMatrixColor('button4')
+        loop.run_until_complete(client.send_message(button4Text + ":submit"))
         button4IsPressed = True
     epd.display_Partial(epd.getbuffer(Himage),0, 0, epd.width, epd.height)
         
